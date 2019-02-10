@@ -1,12 +1,12 @@
-FROM ubuntu:18.04
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
 
-RUN apt-get update && apt-get install -y apt-utils 
+RUN apt-get update && apt-get install -y apt-utils
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential git gcc g++ gcc-6 g++-6 libpython3-dev python3-dev libatlas-base-dev autoconf make automake cmake git libtool subversion libapache2-mod-svn wget curl zlib1g-dev gawk grep make perl flac swig sox htop unzip
+RUN apt-get install -y build-essential git gcc g++ gcc-6 g++-6 libpython3-dev python3-dev libatlas-base-dev autoconf make automake cmake git libtool subversion libapache2-mod-svn wget curl zlib1g-dev gawk grep make perl flac swig sox htop unzip nano
 
-RUN wget https://repo.continuum.io/miniconda/Miniconda2-4.4.10-Linux-x86_64.sh
-RUN bash Miniconda2-4.4.10-Linux-x86_64.sh -b
-RUN rm Miniconda2-4.4.10-Linux-x86_64.sh
+RUN wget https://repo.continuum.io/miniconda/Miniconda2-4.5.12-Linux-x86_64.sh
+RUN bash Miniconda2-4.5.12-Linux-x86_64.sh -b
+RUN rm Miniconda2-4.5.12-Linux-x86_64.sh
 
 # Set path to conda
 ENV PATH /root/miniconda2/bin:$PATH
@@ -15,18 +15,19 @@ RUN ldconfig
 
 RUN pip install --upgrade pip
 
-RUN cd && mkdir kaldi && git clone https://github.com/kaldi-asr/kaldi.git kaldi --origin upstream 
+RUN cd && mkdir kaldi && git clone https://github.com/kaldi-asr/kaldi.git kaldi --origin upstream
 
-RUN export CXX=g++-6
+RUN ldconfig
 
-RUN cd && cd kaldi/tools && ./extras/check_dependencies.sh && make -j 8
+ENV CXX=g++-6
 
-RUN cd && cd kaldi/src && ./configure --shared && make depend -j 8 && make -j 8
+WORKDIR /root/kaldi/tools
 
-RUN cd && cd kaldi/tools && ./extras/install_irstlm.sh
+RUN ./extras/check_dependencies.sh && make CXX=g++-6 -j 8
+
+WORKDIR /root/kaldi/src
+
+RUN ./configure --shared && make clean -j 8 && make depend -j 8 && make -j 8
 
 COPY srilm.tgz /root/kaldi/tools
-RUN cd && cd kaldi/tools && ./extras/install_srilm.sh
-
-RUN fallocate -l 10G /swapfile2 && dd if=/dev/zero of=/swapfile2 bs=1k count=10240k && mkswap /swapfile2 && echo "/swapfile2 swap swap auto 0 0" | tee -a /etc/fstab && chmod 0600 /swapfile2
-
+RUN pip install numpy && cd && cd kaldi/tools && ./extras/install_sequitur.sh && ./extras/install_irstlm.sh && ./extras/install_srilm.sh && ./extras/install_beamformit.sh && ./extras/install_faster_rnnlm.sh && ./extras/install_ffv.sh && ./extras/install_jieba.sh && ./extras/install_morfessor.sh && ./extras/install_mpg123.sh && ./extras/install_phonetisaurus.sh && ./extras/install_pocolm.sh && ./extras/install_portaudio.sh && ./extras/install_sctk_patched.sh && ./extras/install_speex.sh
