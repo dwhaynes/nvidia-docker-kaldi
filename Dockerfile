@@ -17,13 +17,17 @@ RUN pip install --upgrade pip
 
 RUN cd && mkdir kaldi && git clone https://github.com/kaldi-asr/kaldi.git kaldi --origin upstream
 
+#RUN dpkg --configure -a
+
+#RUN apt-get install -y nvidia-cuda-toolkit 
+
 RUN ldconfig
 
 ENV CXX=g++-6
 
 WORKDIR /root/kaldi/tools
 
-RUN ./extras/check_dependencies.sh && make CXX=g++-6 -j 8
+RUN ./extras/check_dependencies.sh && make -j 8
 
 WORKDIR /root/kaldi/src
 
@@ -31,3 +35,6 @@ RUN ./configure --shared && make clean -j 8 && make depend -j 8 && make -j 8
 
 COPY srilm.tgz /root/kaldi/tools
 RUN pip install numpy && cd && cd kaldi/tools && ./extras/install_sequitur.sh && ./extras/install_irstlm.sh && ./extras/install_srilm.sh && ./extras/install_beamformit.sh && ./extras/install_faster_rnnlm.sh && ./extras/install_ffv.sh && ./extras/install_jieba.sh && ./extras/install_morfessor.sh && ./extras/install_mpg123.sh && ./extras/install_phonetisaurus.sh && ./extras/install_pocolm.sh && ./extras/install_portaudio.sh && ./extras/install_sctk_patched.sh && ./extras/install_speex.sh
+
+WORKDIR /root
+
